@@ -21,24 +21,37 @@
         const fileInput = document.getElementById('fileInput');
         fileInput.addEventListener('change', handleFileUpload);
 
-        function handleFileUpload(event) {
+        async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (file) {
+                console.log('File selected:', file.name);
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = async function(e) {
                     const arrayBuffer = e.target.result;
-                    runDosFile(arrayBuffer);
+                    await runDosFile(arrayBuffer);
                 };
                 reader.readAsArrayBuffer(file);
+            } else {
+                console.error('No file selected or file type not supported');
             }
         }
 
         async function runDosFile(arrayBuffer) {
-            const dos = await Dos({ wdosboxUrl: "https://js-dos.com/7.4/wdosbox.js" });
-            const container = document.getElementById('dosbox');
-            dos.run(arrayBuffer, { autolock: true, keymapper: true, keyboardLayout: 'us' }).then(dosbox => {
-                container.appendChild(dosbox);
-            });
+            try {
+                const dos = await Dos({ wdosboxUrl: "https://js-dos.com/7.4/wdosbox.js" });
+                const container = document.getElementById('dosbox');
+                const exeBlob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+                const exeUrl = URL.createObjectURL(exeBlob);
+                
+                dos.run(exeUrl, { autolock: true, keymapper: true, keyboardLayout: 'us' }).then(dosbox => {
+                    container.appendChild(dosbox);
+                    console.log('DOS program started');
+                }).catch(error => {
+                    console.error('Error running DOS program:', error);
+                });
+            } catch (error) {
+                console.error('Error initializing DOSBox:', error);
+            }
         }
     </script>
 </body>
